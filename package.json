@@ -1,0 +1,28 @@
+{
+  "name": "manuh",
+  "version": "0.0.1",
+  "description": "A lightweight client-side topic infrastructure inspired by MQTT pub-sub interface ",
+  "main": "manuh.js",
+  "scripts": {
+    "test": "mocha manuh.tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagostutz/manuh.git"
+  },
+  "keywords": [
+    "manuh",
+    "event",
+    "topic",
+    "mqtt",
+    "clientside",
+    "frontend",
+    "react"
+  ],
+  "author": "Tiago Stutz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tiagostutz/manuh/issues"
+  },
+  "homepage": "https://github.com/tiagostutz/manuh#readme"
+}
