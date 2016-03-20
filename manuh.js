@@ -80,14 +80,6 @@ module.exports = {
     },
 
     _evaluateTopics : function(topicPath) {
-      var arrMatchedTopics = [];
-      if (!this._hasSpecialWildcard(topicPath)) {
-        var topics = this._resolveTopicsByPath(topicPath);
-        arrMatchedTopics.push(topics[topics.length-1]); //if it doesn has a special wildcard, dive into the tree based on the topicPath and take the last one
-        return arrMatchedTopics;
-
-      }else{ //if the path has a wildcard that needs to be evaluated
-
         //TODO - evaluate wildcard scenario
 
         // var idxHash = topicPath.indexOf("/");
@@ -96,28 +88,36 @@ module.exports = {
         // if (idxHash != -1) {
         //   firstLevelName = topicPath.substring(0, topicPath.indexOf("/"));
         // }
+      },
 
+
+
+    publish: function(topicPath, message) {
+      var topicToPublish = null;
+
+      if (!this._hasSpecialWildcard(topicPath)) {
+        topicToPublish = this._resolveTopicsByPath(topicPath);
+
+      }else{ //if the path has a wildcard that needs to be evaluated
+
+        throw {msg: 'Erro ao publicar no topico'};
       }
 
+      for(var k=0; k<topicToPublish.subscriptions; k++) {
+
+        //invoke the callbacks asynchronously and with a closed scope
+        var subscription = topicToPublish[i].subscriptions[k];
+        (function(subsc) {
+          var _subsc = subsc;
+          setTimeout(function() {
+            _subsc.onMessageReceived(message);
+          }, 0);
+        })(subscription);
+      }
 
     },
 
-    publish: function(topicNameRegex, message) {
-
-      var topicsToPublish = this._evaluateTopics(topicNameRegex);
-      for(var i=0; i<topicsToPublish.length; i++) {
-        for(var k=0; k<topicsToPublish[i].subscriptions; k++) {
-
-          //invoke the callbacks asynchronously and with a closed scope
-          var subscription = topicsToPublish[i].subscriptions[k];
-          (function(subsc) {
-            var _subsc = subsc;
-            setTimeout(function() {
-              _subsc.onMessageReceived(message);
-            }, 0);
-          })(subscription);
-        }
-      }
+    subscribe: function(topicNameRegex) {
 
     }
 
