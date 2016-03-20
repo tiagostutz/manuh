@@ -73,10 +73,10 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
       it('should return all the topics that matches the simple regex (charol/manuh)', function() {
         var topics = manuh._evaluateTopics('charol/manuh');
-        // assert.equal(topics.length, 1);
+        assert.equal(topics.length, 1);
 
-        // assert.equal(topics[0].name, 'manuh');
-        // assert.equal(topics[0].parent.name, 'charol');
+        assert.equal(topics[0].name, 'manuh');
+        assert.equal(topics[0].parent.name, 'charol');
       })
     });
   });

@@ -80,14 +80,21 @@ module.exports = {
     },
 
     _evaluateTopics : function(topicPath) {
-        //TODO - evaluate wildcard scenario
 
-        // var idxHash = topicPath.indexOf("/");
-        //
-        // var firstLevelName = topicPath;
-        // if (idxHash != -1) {
-        //   firstLevelName = topicPath.substring(0, topicPath.indexOf("/"));
-        // }
+      var arrMatchedTopics = [];
+      if (!this._hasSpecialWildcard(topicPath)) {
+        var arrTopics = this._resolveTopicsByPath(topicPath);
+        arrMatchedTopics.push(arrTopics[arrTopics.length-1]); //return the last topic found, that will be the last one on the path
+        return arrMatchedTopics;
+      }else{
+
+        var idxHash = topicPath.indexOf("/");
+
+        var firstLevelName = topicPath;
+        if (idxHash != -1) {
+          firstLevelName = topicPath.substring(0, topicPath.indexOf("/"));
+        }
+      }
       },
 
 
