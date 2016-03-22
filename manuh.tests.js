@@ -226,6 +226,29 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                 });
 
+                it ('should pub-sub in 2 topics with sub in 1 changing the same var and varying the pub-delay', function(done) {
+                    var received = null;
+                    manuh.subscribe('charol/manuh/rhelena', function(msg){
+                        received = msg;
+                    });
+                    assert(!received);
+
+
+                    manuh.__publishCallbackInvokeIntervalDelay = 15; //change the delay of the callback invoke
+                    manuh.publish('charol/manuh', 'manuh');
+                    manuh.publish('charol/manuh/rhelena', 'rhelena');
+
+                    setTimeout(function(){
+                        assert(!received);
+                        done();
+                    }, 10); //as the interval delay of the callback invoke was 15, the received var should still be null
+                    setTimeout(function(){
+                        assert.equal(received, 'rhelena');
+                        done();
+                    }, 20);
+
+                });
+
 
             });
         }); //with subscriptions

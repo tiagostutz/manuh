@@ -29,7 +29,7 @@ module.exports = {
 
     topicsTree : {},
 
-    publishCallbackInvokeDelay : 0, //mainly used for development porpuses
+    __publishCallbackInvokeIntervalDelay : 0, //mainly used for development porpuses
 
     _hasSpecialWildcard : function(str) {
         return str.indexOf(this.multiLevelWildCard)!=-1
@@ -108,11 +108,12 @@ module.exports = {
         for(var k=0; k<topicToPublish.subscriptions.length; k++) {
             //invoke the callbacks asynchronously and with a closed scope
             var subscription = topicToPublish.subscriptions[k];
+            _self = this;
             (function(subsc) {
               var _subsc = subsc;
               setTimeout(function() {
                 _subsc.onMessageReceived(message);
-              }, 0);
+            }, _self.__publishCallbackInvokeIntervalDelay);
             })(subscription);
         }
 
