@@ -29,6 +29,8 @@ module.exports = {
 
     topicsTree : {},
 
+    publishCallbackInvokeDelay : 0, //mainly used for development porpuses
+
     _hasSpecialWildcard : function(str) {
         return str.indexOf(this.multiLevelWildCard)!=-1
         || str.indexOf(this.singleLevelWildCard)!=-1
@@ -103,7 +105,7 @@ module.exports = {
             throw {msg: 'Error to publish message on topic because there were found more than 1 topic for the provied topicPath. You can publish only to one topic. Check if there are duplicated topic names.'};
         }
 
-        for(var k=0; k<topicToPublish.subscriptions; k++) {
+        for(var k=0; k<topicToPublish.subscriptions.length; k++) {
             //invoke the callbacks asynchronously and with a closed scope
             var subscription = topicToPublish.subscriptions[k];
             (function(subsc) {

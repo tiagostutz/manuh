@@ -82,7 +82,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
     describe('topic publish', function() {
         describe('manuh.publish()', function() {
 
-            it ('should create the topics based on the path to publish passed (charol/manuh/rhelena)', function() {
+            it ('should create the topics based on the path to publish (charol/manuh/rhelena)', function() {
                 manuh.publish('charol/manuh/rhelena', '3 little girls!');
 
                 assert(manuh.topicsTree.charol);
@@ -99,7 +99,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                 assert.equal(Object.keys(manuh.topicsTree).length, 1);
             });
-            it ('should create and modify the topics based on the path to publish passed (charol/manuh/rhelena)', function() {
+            it ('should create and modify the topics based on the path to publish (charol/manuh/rhelena)', function() {
                 manuh.publish('charol', '1 little girl!');
                 manuh.publish('charol/manuh', '2 little girls!');
                 manuh.publish('charol/manuh/rhelena', '3 little girls!');
@@ -128,7 +128,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
         describe('topic subscription', function() {
             describe('manuh.subscribe()', function() {
 
-                it ('should create the topics based on the path to subscribe passed (charol/manuh/rhelena)', function() {
+                it ('should create the topics based on the path to subscribe (charol/manuh/rhelena)', function() {
                     manuh.subscribe('charol/manuh/rhelena', function(msg){});
 
                     assert(manuh.topicsTree.charol);
@@ -145,7 +145,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                     assert.equal(Object.keys(manuh.topicsTree).length, 1);
                 });
-                it ('should create and modify the topics based on the path to publish passed (charol/manuh/rhelena)', function() {
+                it ('should create the topics based on the path to subscription (charol/manuh/rhelena)', function() {
                     manuh.subscribe('charol', function(msg){});
                     manuh.subscribe('charol/manuh', function(msg){});
                     manuh.subscribe('charol/manuh/rhelena', function(msg){});
@@ -167,7 +167,65 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     assert(manuh.topicsTree.romeu);
 
                     assert.equal(Object.keys(manuh.topicsTree).length, 2);
+
+                    assert.equal(manuh.topicsTree.romeu.subscriptions.length, 1);
+                    assert.equal(typeof(manuh.topicsTree.romeu.subscriptions[0].onMessageReceived), 'function');
                 });
+
+                it ('should create 3 topics based on 1 subscription (charol/manuh/rhelena)', function() {
+                    manuh.subscribe('charol/manuh/rhelena', function(msg){});
+
+                    assert(manuh.topicsTree.charol);
+                    assert(manuh.topicsTree.charol.manuh);
+                    assert(manuh.topicsTree.charol.manuh.rhelena);
+
+                    assert.equal(manuh.topicsTree.charol.name, 'charol');
+                    assert.equal(manuh.topicsTree.charol.manuh.name, 'manuh');
+                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+
+                    assert.equal(manuh.topicsTree.charol.parent, manuh.topicsTree);
+                    assert.equal(manuh.topicsTree.charol.manuh.parent, manuh.topicsTree.charol);
+                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.parent, manuh.topicsTree.charol.manuh);
+
+
+                    assert.equal(Object.keys(manuh.topicsTree).length, 1);
+
+                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
+                    assert.equal(typeof(manuh.topicsTree.charol.manuh.rhelena.subscriptions[0].onMessageReceived), 'function');
+                });
+                it ('should pub-sub in the bus and check the subscription effect (charol/manuh/rhelena)', function(done) {
+                    var received = null;
+                    manuh.subscribe('charol/manuh/rhelena', function(msg){
+                        received = msg;
+                        assert.equal(received, 'test');
+                        done();
+                    });
+                    assert(!received);
+
+                    manuh.publish('charol/manuh/rhelena', 'test');
+
+                });
+
+                it ('should pub-sub in 2 topics changing the same var and check the subscription effect', function(done) {
+                    var received = null;
+                    manuh.subscribe('charol/manuh', function(msg){
+                        received = msg;
+                    });
+                    manuh.subscribe('charol/manuh/rhelena', function(msg){
+                        received = msg;
+                    });
+                    assert(!received);
+
+                    manuh.publish('charol/manuh', 'manuh');
+                    manuh.publish('charol/manuh/rhelena', 'rhelena');
+
+                    setTimeout(function(){
+                        assert.equal(received, 'rhelena');
+                        done();
+                    }, 10);
+
+                });
+
 
             });
         }); //with subscriptions
