@@ -1,6 +1,6 @@
 {
   "name": "manuh",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A lightweight client-side topic infrastructure inspired by MQTT pub-sub interface ",
   "main": "manuh.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "react"
   ],
   "author": "Tiago Stutz",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/tiagostutz/manuh/issues"
   },
