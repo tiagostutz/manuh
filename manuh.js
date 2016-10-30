@@ -1,7 +1,8 @@
 // Following MQTT wildcard spec
 //http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718107
 
-module.exports = {
+var _manuhData = {
+
     /*
     ·         “sport/tennis/player1”
     ·         “sport/tennis/player1/ranking”
@@ -30,12 +31,14 @@ module.exports = {
     topicsTree : {},
 
     __publishCallbackInvokeIntervalDelay : 0, //mainly used for development porpuses
+}
 
-    _hasSpecialWildcard : function(str) {
-        return str.indexOf(this.multiLevelWildCard)!=-1 || str.indexOf(this.singleLevelWildCard)!=-1;
+var _manuhFunctions = {
+    _hasSpecialWildcard : function _hasSpecialWildcard(str) {
+        return str.indexOf(_manuhData.multiLevelWildCard)!=-1 || str.indexOf(_manuhData.singleLevelWildCard)!=-1;
     },
 
-    _createTopic: function(_name, _parent) {
+    _createTopic: function _createTopic(_name, _parent) {
         var topic = {
             name : _name,
             parent : _parent,
@@ -53,11 +56,12 @@ module.exports = {
     },
 
     //returns an array with all matched topics
-    _resolveTopicsByPathRegex : function(topicPath, topicNode) {
+    _resolveTopicsByPathRegex : function __resolveTopicsByPathRegex(topicPath, topicNode) {
       var arrTopics = [];
       if (!topicNode) {
-          topicNode = this.topicsTree;
+          topicNode = _manuhData.topicsTree;
       }
+
       var idxHash = topicPath.indexOf("/");
 
       var firstLevelName = topicPath;
@@ -69,12 +73,12 @@ module.exports = {
       }
 
       if (!topicNode.hasOwnProperty(firstLevelName)) {
-          topicNode[firstLevelName] = this._createTopic(firstLevelName, topicNode);
+          topicNode[firstLevelName] = _manuhFunctions._createTopic(firstLevelName, topicNode);
       }
 
       arrTopics.push(topicNode[firstLevelName]);
       if (idxHash!=-1) {
-          var topics = this._resolveTopicsByPathRegex(topicPath.substring(idxHash+1), topicNode[firstLevelName]);
+          var topics = __resolveTopicsByPathRegex(topicPath.substring(idxHash+1), topicNode[firstLevelName]);
           arrTopics = arrTopics.concat(topics);
       }
 
@@ -82,22 +86,23 @@ module.exports = {
     },
 
     _resolveTopic : function(topicPath) {
-      if (!this._hasSpecialWildcard(topicPath)) {
-          var arrTopics = this._resolveTopicsByPathRegex(topicPath);
+      if (!_manuhFunctions._hasSpecialWildcard(topicPath)) {
+          var arrTopics = _manuhFunctions._resolveTopicsByPathRegex(topicPath);
           return arrTopics[arrTopics.length-1]; //return only the last topic found, that will be the last one on the path
       }else{
           throw {msg: 'Error to resolve a topic by the path provided because it has a wildcard and hence could find 2 or more topcis. This method is intended to be used to get only one topic. To resolve path using wildcards use `_resolveTopicsByPathRegex`.'};
       }
-    },
+    }
 
-
+};
+module.exports = {
 
     publish: function(topicPath, message) {
         var _self = this;
         var topicToPublish = null;
 
-        if (!this._hasSpecialWildcard(topicPath)) {
-            topicToPublish = this._resolveTopic(topicPath);
+        if (!_manuhFunctions._hasSpecialWildcard(topicPath)) {
+            topicToPublish = _manuhFunctions._resolveTopic(topicPath);
 
         }else{ //if the path has a wildcard that needs to be evaluated
             throw {msg: 'Error to publish message on topic because the topic name (path) provided has invalid characters. Note: you cannot publish using wildcards like you can use on subscriptions.'};
@@ -110,7 +115,7 @@ module.exports = {
               var _subsc = subsc;
               setTimeout(function() {
                 _subsc.onMessageReceived(message);
-            }, _self.__publishCallbackInvokeIntervalDelay);
+            }, _manuhData.__publishCallbackInvokeIntervalDelay);
         };
 
         for(var k=0; k<topicToPublish.subscriptions.length; k++) {
@@ -128,8 +133,8 @@ module.exports = {
 
       var topicToSubscribe = null;
 
-      if (!this._hasSpecialWildcard(topicPathRegex)) {
-          topicToSubscribe = this._resolveTopic(topicPathRegex);
+      if (!_manuhFunctions._hasSpecialWildcard(topicPathRegex)) {
+          topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
           topicToSubscribe.addSubscription(onMessageReceived);//if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
       }else{ //if the path has a wildcard that needs to be evaluated
 
@@ -137,3 +142,5 @@ module.exports = {
     }
 
 };
+module.exports.manuhData = _manuhData;
+module.exports.manuhFunctions = _manuhFunctions;

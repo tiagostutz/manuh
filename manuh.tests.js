@@ -4,20 +4,20 @@ var assert = require('assert');
 describe('manuh client-side lightweight topic infrastructure', function() {
 
     beforeEach(function() {
-        manuh.topicsTree = {}; //manual reset
+        manuh.manuhData.topicsTree = {}; //manual reset
     });
 
     describe('topic creation', function() {
         describe('manuh._createTopic()', function() {
 
             it( 'should return a simple topic', function(){
-                var topic = manuh._createTopic('topic_1');
+                var topic = manuh.manuhFunctions._createTopic('topic_1');
                 assert.equal(topic.name, 'topic_1');
                 assert.equal(topic.subscriptions.length, 0);
             });
             it( 'should create a topic with parent and relate them in both topics (parent and child)', function(){
-                var topic1 = manuh._createTopic('topic_1');
-                var topic2 = manuh._createTopic('topic_2', topic1);
+                var topic1 = manuh.manuhFunctions._createTopic('topic_1');
+                var topic2 = manuh.manuhFunctions._createTopic('topic_2', topic1);
                 assert(topic1.topic_2);
                 assert.equal(topic1.topic_2, topic2);
                 assert.equal(topic1.topic_2.name, 'topic_2');
@@ -28,28 +28,28 @@ describe('manuh client-side lightweight topic infrastructure', function() {
         describe('manuh._resolveTopicsByPathRegex()', function() {
 
             it ('should return null', function() {
-                var topics = manuh._resolveTopicsByPathRegex('');
+                var topics = manuh.manuhFunctions._resolveTopicsByPathRegex('');
                 assert.equal(topics, null);
             });
             it ('should return an array with 1 topic created based on a simple name (path)', function() {
-                var topics = manuh._resolveTopicsByPathRegex('simple_topic');
+                var topics = manuh.manuhFunctions._resolveTopicsByPathRegex('simple_topic');
                 assert.equal(topics.length, 1);
                 assert.equal(topics[0].name, 'simple_topic');
-                assert.equal(topics[0].parent, manuh.topicsTree);
+                assert.equal(topics[0].parent, manuh.manuhData.topicsTree);
             });
             it ('should return an array with 2 topics created based on a the name (charol/manuh)', function() {
-                var topics = manuh._resolveTopicsByPathRegex('charol/manuh');
+                var topics = manuh.manuhFunctions._resolveTopicsByPathRegex('charol/manuh');
                 assert.equal(topics.length, 2);
                 assert.equal(topics[0].name, 'charol');
                 assert.equal(topics[1].name, 'manuh');
 
                 assert.equal(topics[0].manuh, topics[1]);
 
-                assert.equal(topics[0].parent, manuh.topicsTree);
+                assert.equal(topics[0].parent, manuh.manuhData.topicsTree);
                 assert.equal(topics[1].parent, topics[0]);
             });
             it ('should return an array with 3 topics created based on a the name (charol/manuh/rhelena)', function() {
-                var topics = manuh._resolveTopicsByPathRegex('charol/manuh/rhelena');
+                var topics = manuh.manuhFunctions._resolveTopicsByPathRegex('charol/manuh/rhelena');
                 assert.equal(topics.length, 3);
                 assert.equal(topics[0].name, 'charol');
                 assert.equal(topics[1].name, 'manuh');
@@ -58,7 +58,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 assert.equal(topics[0].manuh, topics[1]);
                 assert.equal(topics[1].rhelena, topics[2]);
 
-                assert.equal(topics[0].parent, manuh.topicsTree);
+                assert.equal(topics[0].parent, manuh.manuhData.topicsTree);
                 assert.equal(topics[1].parent, topics[0]);
                 assert.equal(topics[2].parent, topics[1]);
             });
@@ -70,7 +70,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
         describe('manuh._resolveTopic()', function() {
 
             it('should return all the topics that matches the simple regex (charol/manuh)', function() {
-                var topic = manuh._resolveTopic('charol/manuh');
+                var topic = manuh.manuhFunctions._resolveTopic('charol/manuh');
                 assert(topic);
 
                 assert.equal(topic.name, 'manuh');
@@ -85,42 +85,42 @@ describe('manuh client-side lightweight topic infrastructure', function() {
             it ('should create the topics based on the path to publish (charol/manuh/rhelena)', function() {
                 manuh.publish('charol/manuh/rhelena', '3 little girls!');
 
-                assert(manuh.topicsTree.charol);
-                assert(manuh.topicsTree.charol.manuh);
-                assert(manuh.topicsTree.charol.manuh.rhelena);
+                assert(manuh.manuhData.topicsTree.charol);
+                assert(manuh.manuhData.topicsTree.charol.manuh);
+                assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
 
-                assert.equal(manuh.topicsTree.charol.name, 'charol');
-                assert.equal(manuh.topicsTree.charol.manuh.name, 'manuh');
-                assert.equal(manuh.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+                assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
 
-                assert.equal(manuh.topicsTree.charol.parent, manuh.topicsTree);
-                assert.equal(manuh.topicsTree.charol.manuh.parent, manuh.topicsTree.charol);
-                assert.equal(manuh.topicsTree.charol.manuh.rhelena.parent, manuh.topicsTree.charol.manuh);
+                assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
 
-                assert.equal(Object.keys(manuh.topicsTree).length, 1);
+                assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
             });
             it ('should create and modify the topics based on the path to publish (charol/manuh/rhelena)', function() {
                 manuh.publish('charol', '1 little girl!');
                 manuh.publish('charol/manuh', '2 little girls!');
                 manuh.publish('charol/manuh/rhelena', '3 little girls!');
 
-                assert(manuh.topicsTree.charol);
-                assert(manuh.topicsTree.charol.manuh);
-                assert(manuh.topicsTree.charol.manuh.rhelena);
+                assert(manuh.manuhData.topicsTree.charol);
+                assert(manuh.manuhData.topicsTree.charol.manuh);
+                assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
 
-                assert.equal(manuh.topicsTree.charol.name, 'charol');
-                assert.equal(manuh.topicsTree.charol.manuh.name, 'manuh');
-                assert.equal(manuh.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+                assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
 
-                assert.equal(manuh.topicsTree.charol.parent, manuh.topicsTree);
-                assert.equal(manuh.topicsTree.charol.manuh.parent, manuh.topicsTree.charol);
-                assert.equal(manuh.topicsTree.charol.manuh.rhelena.parent, manuh.topicsTree.charol.manuh);
+                assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
 
-                assert(!manuh.topicsTree.romeu);
+                assert(!manuh.manuhData.topicsTree.romeu);
                 manuh.publish('romeu', '1 funny boy!');
-                assert(manuh.topicsTree.romeu);
+                assert(manuh.manuhData.topicsTree.romeu);
 
-                assert.equal(Object.keys(manuh.topicsTree).length, 2);
+                assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 2);
             });
 
         });
@@ -131,67 +131,67 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 it ('should create the topics based on the path to subscribe (charol/manuh/rhelena)', function() {
                     manuh.subscribe('charol/manuh/rhelena', function(msg){});
 
-                    assert(manuh.topicsTree.charol);
-                    assert(manuh.topicsTree.charol.manuh);
-                    assert(manuh.topicsTree.charol.manuh.rhelena);
+                    assert(manuh.manuhData.topicsTree.charol);
+                    assert(manuh.manuhData.topicsTree.charol.manuh);
+                    assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
 
-                    assert.equal(manuh.topicsTree.charol.name, 'charol');
-                    assert.equal(manuh.topicsTree.charol.manuh.name, 'manuh');
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+                    assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
 
-                    assert.equal(manuh.topicsTree.charol.parent, manuh.topicsTree);
-                    assert.equal(manuh.topicsTree.charol.manuh.parent, manuh.topicsTree.charol);
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.parent, manuh.topicsTree.charol.manuh);
+                    assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
 
-                    assert.equal(Object.keys(manuh.topicsTree).length, 1);
+                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
                 });
                 it ('should create the topics based on the path to subscription (charol/manuh/rhelena)', function() {
                     manuh.subscribe('charol', function(msg){});
                     manuh.subscribe('charol/manuh', function(msg){});
                     manuh.subscribe('charol/manuh/rhelena', function(msg){});
 
-                    assert(manuh.topicsTree.charol);
-                    assert(manuh.topicsTree.charol.manuh);
-                    assert(manuh.topicsTree.charol.manuh.rhelena);
+                    assert(manuh.manuhData.topicsTree.charol);
+                    assert(manuh.manuhData.topicsTree.charol.manuh);
+                    assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
 
-                    assert.equal(manuh.topicsTree.charol.name, 'charol');
-                    assert.equal(manuh.topicsTree.charol.manuh.name, 'manuh');
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+                    assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
 
-                    assert.equal(manuh.topicsTree.charol.parent, manuh.topicsTree);
-                    assert.equal(manuh.topicsTree.charol.manuh.parent, manuh.topicsTree.charol);
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.parent, manuh.topicsTree.charol.manuh);
+                    assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
 
-                    assert(!manuh.topicsTree.romeu);
+                    assert(!manuh.manuhData.topicsTree.romeu);
                     manuh.subscribe('romeu', function(msg){});
-                    assert(manuh.topicsTree.romeu);
+                    assert(manuh.manuhData.topicsTree.romeu);
 
-                    assert.equal(Object.keys(manuh.topicsTree).length, 2);
+                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 2);
 
-                    assert.equal(manuh.topicsTree.romeu.subscriptions.length, 1);
-                    assert.equal(typeof(manuh.topicsTree.romeu.subscriptions[0].onMessageReceived), 'function');
+                    assert.equal(manuh.manuhData.topicsTree.romeu.subscriptions.length, 1);
+                    assert.equal(typeof(manuh.manuhData.topicsTree.romeu.subscriptions[0].onMessageReceived), 'function');
                 });
 
                 it ('should create 3 topics based on 1 subscription (charol/manuh/rhelena)', function() {
                     manuh.subscribe('charol/manuh/rhelena', function(msg){});
 
-                    assert(manuh.topicsTree.charol);
-                    assert(manuh.topicsTree.charol.manuh);
-                    assert(manuh.topicsTree.charol.manuh.rhelena);
+                    assert(manuh.manuhData.topicsTree.charol);
+                    assert(manuh.manuhData.topicsTree.charol.manuh);
+                    assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
 
-                    assert.equal(manuh.topicsTree.charol.name, 'charol');
-                    assert.equal(manuh.topicsTree.charol.manuh.name, 'manuh');
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+                    assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
 
-                    assert.equal(manuh.topicsTree.charol.parent, manuh.topicsTree);
-                    assert.equal(manuh.topicsTree.charol.manuh.parent, manuh.topicsTree.charol);
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.parent, manuh.topicsTree.charol.manuh);
+                    assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
 
 
-                    assert.equal(Object.keys(manuh.topicsTree).length, 1);
+                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
 
-                    assert.equal(manuh.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
-                    assert.equal(typeof(manuh.topicsTree.charol.manuh.rhelena.subscriptions[0].onMessageReceived), 'function');
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
+                    assert.equal(typeof(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions[0].onMessageReceived), 'function');
                 });
                 it ('should pub-sub in the bus and check the subscription effect (charol/manuh/rhelena)', function(done) {
                     var received = null;
@@ -234,7 +234,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     assert(!received);
 
 
-                    manuh.__publishCallbackInvokeIntervalDelay = 15; //change the delay of the callback invoke
+                    manuh.manuhData.__publishCallbackInvokeIntervalDelay = 30; //change the delay of the callback invoke
                     manuh.publish('charol/manuh', 'manuh');
                     manuh.publish('charol/manuh/rhelena', 'rhelena');
 
@@ -245,7 +245,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     setTimeout(function(){
                         assert.equal(received, 'rhelena');
                         done();
-                    }, 20);
+                    }, 50);
 
                 });
 
