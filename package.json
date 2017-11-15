@@ -1,6 +1,6 @@
 {
   "name": "manuh",
-  "version": "0.1.2",
+  "version": "0.2.1",
   "description": "A lightweight client-side topic infrastructure inspired by MQTT pub-sub interface ",
   "main": "manuh.js",
   "scripts": {
