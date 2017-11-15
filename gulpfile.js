@@ -10,7 +10,7 @@ gulp.task('lint', function() {
         .pipe(jshint.reporter('default'));
 });
 
-gulp.task('scripts', function() {
+gulp.task('dist', function() {
     return gulp.src('manuh.js')
         .pipe(concat('manuh.js'))
         .pipe(gulp.dest('dist'))
