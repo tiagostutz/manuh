@@ -58,14 +58,10 @@ var _manuhFunctions = {
     },
 
     _getTopicPath: function __getTopicPath(topicNode) {
-      console.log('getTopicPath ' + JSON.stringify(topicNode, function(key, value) {
-        if(key == 'parent') {return value.id;}
-        else {return value;}
-      }));
       if(topicNode.parent==null) {
         return '';
       } else {
-        var parentName = __getTopicPath(topicNode.parent);
+        let parentName = __getTopicPath(topicNode.parent);
         return parentName + (parentName!=''?'/':'') + topicNode.name;
       }
     },
@@ -113,7 +109,6 @@ var _manuhFunctions = {
       var invokeCallbackIsolated = function(subsc) {
           var _subsc = subsc;
           setTimeout(function() {
-              console.log('>>>>>> CALLING ONMESSAGE ');
               _subsc.onMessageReceived(message);
           }, _manuhData.__publishCallbackInvokeIntervalDelay);
       };
@@ -121,7 +116,6 @@ var _manuhFunctions = {
       for(var k=0; k<topicToPublish.subscriptions.length; k++) {
           //invoke the callbacks asynchronously and with a closed scope
           var subscription = topicToPublish.subscriptions[k];
-          console.log('>>>>>> INVOKE ' + k);
           new invokeCallbackIsolated(subscription);
       }
     }
@@ -139,7 +133,6 @@ module.exports = {
      * }
      */
     publish: function(topicPath, message, options) {
-        console.log('PUBLISH ' + topicPath + '=' + JSON.stringify(message) + ' ' + JSON.stringify(options));
         var _self = this;
         var topicToPublish = null;
 
@@ -159,8 +152,7 @@ module.exports = {
             topicToPublish.retainedMessage = message;
 
           } else if(options.retainment_provider=='localStorage') {
-            var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToPublish);
-            console.log('publish retained ' + key);
+            let key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToPublish);
             localStorage.setItem(key, JSON.stringify(message));
 
           } else {
@@ -179,21 +171,17 @@ module.exports = {
 
       var topicToSubscribe = null;
 
-      console.log('subscribing to ' + topicPathRegex);
       if (!_manuhFunctions._hasSpecialWildcard(topicPathRegex)) {
           topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
           topicToSubscribe.addSubscription(onMessageReceived);//if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
-          console.log('TOPICSUB ' + JSON.stringify(topicToSubscribe.retainedMessage));
 
           //lookup for retained messages in memory
           if(topicToSubscribe.retainedMessage) {
-            console.log('multicasting retained message after subscription');
             _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
 
           //lookup for retained messages on local-storage
           } else {
-            var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
-            console.log('subscribe retained ' + key);
+            let key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
             var message = JSON.parse(localStorage.getItem(key));
             if(message) {
               _manuhFunctions._multicastMessage(topicToSubscribe, message);
