@@ -193,6 +193,33 @@ module.exports = {
       }
     },
 
+    getRetained: function(topicPathRegex) {
+
+      var topicToRead = null;
+
+      if (!_manuhFunctions._hasSpecialWildcard(topicPathRegex)) {
+          topicToRead = _manuhFunctions._resolveTopic(topicPathRegex);
+
+          //lookup for retained messages in memory
+          if(topicToRead.retainedMessage) {
+            return topicToRead.retainedMessage;
+
+          //lookup for retained messages on local-storage
+          } else {
+            let key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToRead);
+            var message = JSON.parse(localStorage.getItem(key));
+            if(message) {
+              return message;
+            } else {
+              return null;
+            }
+          }
+
+      } else { //if the path has a wildcard that needs to be evaluated
+        throw 'Wildcard paths not supported';
+      }
+    },
+
 };
 module.exports.manuhData = _manuhData;
 module.exports.manuhFunctions = _manuhFunctions;
