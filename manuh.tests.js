@@ -129,7 +129,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
             describe('manuh.subscribe()', function() {
 
                 it ('should create the topics based on the path to subscribe (charol/manuh/rhelena)', function() {
-                    manuh.subscribe('charol/manuh/rhelena', function(msg){});
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){});
 
                     assert(manuh.manuhData.topicsTree.charol);
                     assert(manuh.manuhData.topicsTree.charol.manuh);
@@ -146,9 +146,9 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
                 });
                 it ('should create the topics based on the path to subscription (charol/manuh/rhelena)', function() {
-                    manuh.subscribe('charol', function(msg){});
-                    manuh.subscribe('charol/manuh', function(msg){});
-                    manuh.subscribe('charol/manuh/rhelena', function(msg){});
+                    manuh.subscribe('charol', this, function(msg){});
+                    manuh.subscribe('charol/manuh', this, function(msg){});
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){});
 
                     assert(manuh.manuhData.topicsTree.charol);
                     assert(manuh.manuhData.topicsTree.charol.manuh);
@@ -163,7 +163,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
 
                     assert(!manuh.manuhData.topicsTree.romeu);
-                    manuh.subscribe('romeu', function(msg){});
+                    manuh.subscribe('romeu', this, function(msg){});
                     assert(manuh.manuhData.topicsTree.romeu);
 
                     assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 2);
@@ -173,7 +173,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 });
 
                 it ('should create 3 topics based on 1 subscription (charol/manuh/rhelena)', function() {
-                    manuh.subscribe('charol/manuh/rhelena', function(msg){});
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){});
 
                     assert(manuh.manuhData.topicsTree.charol);
                     assert(manuh.manuhData.topicsTree.charol.manuh);
@@ -195,7 +195,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 });
                 it ('should pub-sub in the bus and check the subscription effect (charol/manuh/rhelena)', function(done) {
                     var received = null;
-                    manuh.subscribe('charol/manuh/rhelena', function(msg){
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){
                         received = msg;
                         assert.equal(received, 'test');
                         done();
@@ -208,10 +208,10 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                 it ('should pub-sub in 2 topics changing the same var and check the subscription effect', function(done) {
                     var received = null;
-                    manuh.subscribe('charol/manuh', function(msg){
+                    manuh.subscribe('charol/manuh', this, function(msg){
                         received = msg;
                     });
-                    manuh.subscribe('charol/manuh/rhelena', function(msg){
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){
                         received = msg;
                     });
                     assert(!received);
@@ -228,7 +228,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                 it ('should pub-sub in 2 topics with sub in 1 changing the same var and varying the pub-delay', function(done) {
                     var received = null;
-                    manuh.subscribe('charol/manuh/rhelena', function(msg){
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){
                         received = msg;
                     });
                     assert(!received);
@@ -240,13 +240,34 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                     setTimeout(function(){
                         assert(!received);
-                        done();
                     }, 10); //as the interval delay of the callback invoke was 15, the received var should still be null
                     setTimeout(function(){
                         assert.equal(received, 'rhelena');
                         done();
-                    }, 50);
+                    }, 40);
 
+                });
+                
+                it ('should subscribe 2 targets in the same topic and unsubscribe one', function(done) {
+                  var receivedOne = false;
+                  var receivedTwo = false;
+                  manuh.subscribe('charol/manuh/rhelena', 'one', function(msg){
+                      receivedOne = true;
+                  });
+                  
+                  manuh.subscribe('charol/manuh/rhelena', 'two', function(msg){
+                      receivedTwo = true;
+                  });
+                  
+                  manuh.unsubscribe('charol/manuh/rhelena', 'one');
+                  
+                  manuh.publish('charol/manuh/rhelena', 'manuh');
+                  
+                  setTimeout(function(){
+                      assert.equal(receivedOne, false);
+                      assert.equal(receivedTwo, true);
+                      done();
+                  }, 50);
                 });
 
 
