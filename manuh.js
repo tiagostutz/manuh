@@ -63,7 +63,7 @@ var _manuhFunctions = {
         if (topicNode.parent == null) {
             return '';
         } else {
-            let parentName = __getTopicPath(topicNode.parent);
+            var parentName = __getTopicPath(topicNode.parent);
             return parentName + (parentName != '' ? '/' : '') + topicNode.name;
         }
     },
@@ -160,7 +160,7 @@ module.exports = {
                 topicToPublish.retainedMessage = message;
 
             } else if (options.retainment_provider == 'localStorage') {
-                let key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToPublish);
+                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToPublish);
                 localStorage.setItem(key, JSON.stringify(message));
 
             } else {
@@ -191,7 +191,7 @@ module.exports = {
 
                 //lookup for retained messages on local-storage
             } else {
-                let key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
+                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
                 var message = JSON.parse(localStorage.getItem(key));
                 if (message) {
                     _manuhFunctions._multicastMessage(topicToSubscribe, message);
@@ -216,7 +216,7 @@ module.exports = {
 
                 //lookup for retained messages on local-storage
             } else {
-                let key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToRead);
+                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToRead);
                 var message = JSON.parse(localStorage.getItem(key));
                 if (message) {
                     return message;
