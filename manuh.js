@@ -188,7 +188,23 @@ module.exports = {
                 }
             }
         } else { //if the path has a wildcard that needs to be evaluated
-            throw 'Wildcard paths not supported for subscriptions yet';    
+            topicsToSubscribe = _manuhFunctions._resolveTopicsByPathRegex(topicPathRegex);
+            topicsToSubscribe.map(function (topic) {
+                topic.addSubscription(target, onMessageReceived);
+
+                //lookup for retained messages in memory
+                if (topic.retainedMessage) {
+                    _manuhFunctions._multicastMessage(topic, topic.retainedMessage);
+                    //lookup for retained messages on local-storage
+                } else {
+                    var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topic);
+                    var message = JSON.parse(localStorage.getItem(key));
+                    if (message) {
+                        _manuhFunctions._multicastMessage(topic, message);
+                    }
+                }
+            });//if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
+
         }
     },
 
