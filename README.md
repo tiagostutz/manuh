@@ -6,11 +6,11 @@ With or without `manuh` you should keep in mind the importante of one-way data f
 
 Without `manuh` (and one way data flow), when the component is clicked, the `setState` of the overall view is invoked:
 
-![Sem manuh](https://res.cloudinary.com/lexana/image/upload/v1524625621/detalhamento-sem-manuh.gif)
+![Without manuh](https://res.cloudinary.com/lexana/image/upload/v1524625621/detalhamento-sem-manuh.gif)
 
 With `manuh` (and one way data flow), the communication between the clicked component and the opening canvas component is made on a pub/sub fashion, and only the canvas component `setState` is invoked
 
-![Com manuh](https://res.cloudinary.com/lexana/image/upload/v1524625630/detalhamento-com-manuh.gif)
+![With manuh](https://res.cloudinary.com/lexana/image/upload/v1524625630/detalhamento-com-manuh.gif)
 
 
 # Important changes
