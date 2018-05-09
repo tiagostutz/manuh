@@ -78,68 +78,32 @@ var _manuhFunctions = {
         if (!topicNode) {
             topicNode = _manuhData.topicsTree;
         }
-        log('=====topicNode', topicNode);
-
         var arrTopicNames = topicPath.split(/\/(.+)/);
-        log('=====arrTopicNames', topicPath, arrTopicNames);
 
         var firstLevelName = topicPath;
         if (arrTopicNames.length > 1) {
             firstLevelName = arrTopicNames[0];
         }
-        log('firstLevelName', firstLevelName);
         if (firstLevelName.trim().length === 0) {
             return null;
         }
 
-        if (firstLevelName == '#') { //its a wildcard so we need to find all the subtopics of the current `topicNode`
-            var topicTemplate = _manuhFunctions._createTopic('temp',null); //create a topic to get the attributes that are not nother topics
-            var topicAttributeNames = Object.keys(topicTemplate);
-            
-            var subtopicsNames = Object.keys(topicNode).map(function(attr) { 
-                                                    return (topicAttributeNames.indexOf(attr) == -1) ? attr : null;
-                                                 })
-                                                .reduce(function(a,b) { 
-                                                    if(b!=null) { 
-                                                        a.push(b); 
-                                                    } 
-                                                    return a;
-                                                }, [] );
-            log('subtopicsNames==> ',subtopicsNames);
-            if (subtopicsNames.length > 0) {
-                subtopicsNames.map(function(subtopicName) {
-                    log(subtopicName + '/#::', subtopicName + '/#')
-                    var topics = __resolveTopicsByPathRegex(subtopicName + '/#', topicNode);
-                    log('topics WITH SUBTOPICS', topics);
-                    arrTopics = arrTopics.concat(topics);
-                });
-            }
-        }else{
-            
-            if (!topicNode.hasOwnProperty(firstLevelName)) {
-                log('CREATING TOPIC....', firstLevelName);
-                topicNode[firstLevelName] = _manuhFunctions._createTopic(firstLevelName, topicNode);
-            }
-
-            log('PUSHING:::::', topicNode[firstLevelName])
-            arrTopics.push(topicNode[firstLevelName]);
-            if (arrTopicNames.length > 1) {
-                var topics = __resolveTopicsByPathRegex(arrTopicNames[1], topicNode[firstLevelName]);
-                arrTopics = arrTopics.concat(topics);
-            }
+        if (!topicNode.hasOwnProperty(firstLevelName)) {
+            topicNode[firstLevelName] = _manuhFunctions._createTopic(firstLevelName, topicNode);
         }
 
-        log('arrTopics', arrTopics);
+        arrTopics.push(topicNode[firstLevelName]);
+        if (arrTopicNames.length > 1) {
+            var topics = __resolveTopicsByPathRegex(arrTopicNames[1], topicNode[firstLevelName]);
+            arrTopics = arrTopics.concat(topics);
+        }
+
         return arrTopics;
     },
 
     _resolveTopic: function (topicPath) {
-        if (!_manuhFunctions._hasSpecialWildcard(topicPath)) {
-            var arrTopics = _manuhFunctions._resolveTopicsByPathRegex(topicPath);
-            return arrTopics[arrTopics.length - 1]; //return only the last topic found, that will be the last one on the path
-        } else {
-            throw {msg: 'Error to resolve a topic by the path provided because it has a wildcard and hence could find 2 or more topcis. This method is intended to be used to get only one topic. To resolve path using wildcards use `_resolveTopicsByPathRegex`.'};
-        }
+        var arrTopics = _manuhFunctions._resolveTopicsByPathRegex(topicPath);
+        return arrTopics[arrTopics.length - 1]; //return only the last topic found, that will be the last one on the path
     },
 
     _multicastMessage: function (topicToPublish, message) {
@@ -164,16 +128,18 @@ module.exports = {
 
     publish: function (topicPath, message, options) {
         var _self = this;
-        var topicToPublish = null;
+        var topicsToPublish = [];
+        var mainTopic = null;
 
         if (!_manuhFunctions._hasSpecialWildcard(topicPath)) {
-            topicToPublish = _manuhFunctions._resolveTopic(topicPath);
+            mainTopic = _manuhFunctions._resolveTopic(topicPath);
+            if (mainTopic.length > 1) {
+                throw {msg: 'Error to publish message on topic because there were found more than 1 topic for the provied topicPath. You can publish only to one topic. Check if there are duplicated topic names.'};
+            }
+            topicsToPublish.push(mainTopic);
 
         } else { //if the path has a wildcard that needs to be evaluated
             throw {msg: 'Error to publish message on topic because the topic name (path) provided has invalid characters. Note: you cannot publish using wildcards like you can use on subscriptions.'};
-        }
-        if (topicToPublish.length > 1) {
-            throw {msg: 'Error to publish message on topic because there were found more than 1 topic for the provied topicPath. You can publish only to one topic. Check if there are duplicated topic names.'};
         }
 
         var invokeCallbackIsolated = function (subsc) {
@@ -185,10 +151,10 @@ module.exports = {
 
         if (options && options.retained) {
             if (!options.retainment_provider || options.retainment_provider == 'memory') {
-                topicToPublish.retainedMessage = message;
+                mainTopic.retainedMessage = message;
 
             } else if (options.retainment_provider == 'localStorage') {
-                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToPublish);
+                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(mainTopic);
                 debug('publish retained ' + key);
                 _manuhData.retainedStorage.setItem(key, JSON.stringify(message));
             } else {
@@ -196,7 +162,70 @@ module.exports = {
             }
         }
 
-        _manuhFunctions._multicastMessage(topicToPublish, message);
+        // publish in the main topic and in the derivated topics
+        // var topicTemplate = _manuhFunctions._createTopic('temp', null); //create a topic to get the attributes that are not nother topics
+        // var topicAttributeNames = Object.keys(topicTemplate);
+
+        // var siblingTopics = Object.keys(mainTopic.parent)
+        //                             .map(function(attr) { 
+        //                                 return (topicAttributeNames.indexOf(attr) == -1) ? attr : null;
+        //                             })
+        //                             .reduce(function(a,b) { 
+        //                                 if(b!=null) { 
+        //                                     a.push(b); 
+        //                                 } 
+        //                                 return a;
+        //                             }, []);
+
+        // if (siblingTopics.indexOf('#') != -1) { //has wildcard
+        //     siblingTopics.map(function (topicName) {
+        //         if (topicName == '#') {
+        //             topicsToPublish.push(mainTopic.parent[topicName]);
+        //         }
+        //     });
+        // }
+
+
+
+        // publish in the main topic and in the derivated topics
+        var findAllWildcardTopics = function (topic) {
+            if (!topic) {
+                return [];
+            }
+            var wildcardTopics = [];
+            var topicTemplate = _manuhFunctions._createTopic('temp', null); //create a topic to get the attributes that are not nother topics
+            var topicAttributeNames = Object.keys(topicTemplate);
+
+            var childTopics = Object.keys(topic)
+                .map(function (attr) {
+                    return (topicAttributeNames.indexOf(attr) == -1) ? attr : null;
+                })
+                .reduce(function (a, b) {
+                    if (b != null) {
+                        a.push(b);
+                    }
+                    return a;
+                }, []);
+
+            childTopics.map(function (topicName) {
+                if (topicName == '#') { //has wildcard
+                    wildcardTopics.push(topic[topicName]);
+                } else {
+                    wildcardTopics = wildcardTopics.concat(findAllWildcardTopics(topic.parent));
+                }
+            });
+            return wildcardTopics;
+
+        };
+        var wildCardTopicsFound = findAllWildcardTopics(mainTopic.parent);
+        topicsToPublish = topicsToPublish.concat(wildCardTopicsFound);
+
+
+        topicsToPublish.map(function(topic) {
+            log('[[[topic]]]]:::', topic.name, topic.subscriptions);
+            _manuhFunctions._multicastMessage(topic, message);
+        });
+        log('===============================');
 
     },
 
@@ -207,40 +236,21 @@ module.exports = {
 
         var topicToSubscribe = null;
 
-        if (!_manuhFunctions._hasSpecialWildcard(topicPathRegex)) {
-            topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
-            topicToSubscribe.addSubscription(target, onMessageReceived);//if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
+        topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
+        topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
 
-            //lookup for retained messages in memory
-            if (topicToSubscribe.retainedMessage) {
-                _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
-                //lookup for retained messages on local-storage
-            } else {
-                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
-                var message = _manuhData.retainedStorage.getItem(key);
-                if (message) {
-                    _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
-                }
+        //lookup for retained messages in memory
+        if (topicToSubscribe.retainedMessage) {
+            _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
+            //lookup for retained messages on local-storage
+        } else {
+            var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
+            var message = _manuhData.retainedStorage.getItem(key);
+            if (message) {
+                _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
             }
-        } else { //if the path has a wildcard that needs to be evaluated
-            topicsToSubscribe = _manuhFunctions._resolveTopicsByPathRegex(topicPathRegex);
-            topicsToSubscribe.map(function (topic) {
-                topic.addSubscription(target, onMessageReceived);
-
-                //lookup for retained messages in memory
-                if (topic.retainedMessage) {
-                    _manuhFunctions._multicastMessage(topic, topic.retainedMessage);
-                    //lookup for retained messages on local-storage
-                } else {
-                    var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topic);
-                    var message = JSON.parse(_manuhData.retainedStorage.getItem(key));
-                    if (message) {
-                        _manuhFunctions._multicastMessage(topic, message);
-                    }
-                }
-            });//if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
-
         }
+
     },
 
     unsubscribe: function (topicPathRegex, target) {

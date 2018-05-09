@@ -67,57 +67,34 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
         describe('manuh._resolveTopicsByWildcardPathRegex()', function () {
             it('should return an array with 3 topics by using the `#` wildcard subscription in previous created topics', function () {
-                //Create the topics
-                var topics = manuh.manuhFunctions._resolveTopicsByPathRegex('charol/manuh/rhelena');
-                assert.equal(topics.length, 3);
-                assert.equal(topics[0].name, 'charol');
-                assert.equal(topics[1].name, 'manuh');
-                assert.equal(topics[2].name, 'rhelena');
-
-                assert.equal(topics[0].manuh, topics[1]);
-                assert.equal(topics[1].rhelena, topics[2]);
-
-                assert.equal(topics[0].parent, manuh.manuhData.topicsTree);
-                assert.equal(topics[1].parent, topics[0]);
-                assert.equal(topics[2].parent, topics[1]);
-
                 //Now, test the wildcard. The result MUST be the same as the previous asserts
                 var topicsWildcarded = manuh.manuhFunctions._resolveTopicsByPathRegex('charol/manuh/#');
                 assert.equal(topicsWildcarded.length, 3);
                 assert.equal(topicsWildcarded[0].name, 'charol');
                 assert.equal(topicsWildcarded[1].name, 'manuh');
-                assert.equal(topicsWildcarded[2].name, 'rhelena');
+                assert.equal(topicsWildcarded[2].name, '#');
 
                 assert.equal(topicsWildcarded[0].manuh, topicsWildcarded[1]);
-                assert.equal(topicsWildcarded[1].rhelena, topicsWildcarded[2]);
-
-                assert.equal(topicsWildcarded[0].parent, manuh.manuhData.topicsTree);
-                assert.equal(topicsWildcarded[1].parent, topicsWildcarded[0]);
-                assert.equal(topicsWildcarded[2].parent, topicsWildcarded[1]);
-
-                //Now, test the wildcard. The result MUST be the same as the previous asserts
-                var topicsWildcarded = manuh.manuhFunctions._resolveTopicsByPathRegex('charol/#');
-                assert.equal(topicsWildcarded.length, 3);
-                assert.equal(topicsWildcarded[0].name, 'charol');
-                assert.equal(topicsWildcarded[1].name, 'manuh');
-                assert.equal(topicsWildcarded[2].name, 'rhelena');
-
-                assert.equal(topicsWildcarded[0].manuh, topicsWildcarded[1]);
-                assert.equal(topicsWildcarded[1].rhelena, topicsWildcarded[2]);
+                assert.equal(topicsWildcarded[1]['#'], topicsWildcarded[2]);
 
                 assert.equal(topicsWildcarded[0].parent, manuh.manuhData.topicsTree);
                 assert.equal(topicsWildcarded[1].parent, topicsWildcarded[0]);
                 assert.equal(topicsWildcarded[2].parent, topicsWildcarded[1]);
             });
 
-            it('should return an array with 1 topic by using the `#` wildcard subscription, creating the topic', function () {
-                //Now, test the wildcard. The result MUST be the same as the previous asserts
+            it('should return an array with 2 topics by using the `#` wildcard subscription in previous created topics', function () {
+                // //Now, test the wildcard. The result MUST be the same as the previous asserts
                 var topicsWildcarded = manuh.manuhFunctions._resolveTopicsByPathRegex('charol/#');
-                assert.equal(topicsWildcarded.length, 1);
+                assert.equal(topicsWildcarded.length, 2);
                 assert.equal(topicsWildcarded[0].name, 'charol');
+                assert.equal(topicsWildcarded[1].name, '#');
+
+                assert.equal(topicsWildcarded[0]['#'], topicsWildcarded[1]);
 
                 assert.equal(topicsWildcarded[0].parent, manuh.manuhData.topicsTree);
+                assert.equal(topicsWildcarded[1].parent, topicsWildcarded[0]);
             });
+
         });
 
     });
@@ -327,6 +304,41 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 });
 
 
+            });
+
+            describe('manuh.wildCardSubscribe()', function () {
+                it('should pub/sub in 2 a non-existing first-level topic with `#` wildcard', function (done) {
+                    var pubCount = 0;
+                    manuh.subscribe('charol/#', 'one', function (msg) {
+                        pubCount++;
+                    });
+
+                    manuh.publish('charol/manuh1', 'manuh');
+                    manuh.publish('charol/manuh2', 'manuh');
+                    
+                    setTimeout(function () {
+                        assert.equal(pubCount, 2);
+                        done();
+                    }, 50);
+
+                });
+
+                it('should pub/sub in 3 a non-existing multi-level topic with `#` wildcard', function (done) {
+                    var pubCount = 0;
+                    manuh.subscribe('charol/#', 'one', function (msg) {
+                        pubCount++;
+                    });
+
+                    manuh.publish('charol/manuh/rhelena', 'manuh');
+                    manuh.publish('charol/manuh1', 'manuh');
+                    manuh.publish('charol/manuh2', 'manuh');
+
+                    setTimeout(function () {
+                        assert.equal(pubCount, 3);
+                        done();
+                    }, 50);
+
+                });
             });
         }); //with subscriptions
 
