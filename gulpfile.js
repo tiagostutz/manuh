@@ -5,13 +5,13 @@ var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
 
 gulp.task('lint', function() {
-    return gulp.src('manuh.js')
+    return gulp.src('src/manuh.js')
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
 
 gulp.task('dist', function() {
-    return gulp.src('manuh.js')
+    return gulp.src('src/manuh.js')
         .pipe(concat('manuh.js'))
         .pipe(gulp.dest('dist'))
         .pipe(rename('manuh.min.js'))

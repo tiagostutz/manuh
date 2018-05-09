@@ -4,7 +4,7 @@
   "description": "A lightweight client-side topic infrastructure inspired by MQTT pub-sub interface ",
   "main": "manuh.js",
   "scripts": {
-    "test": "mocha manuh.tests.js"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
