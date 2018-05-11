@@ -161,15 +161,15 @@ describe('manuh client-side lightweight topic infrastructure', function() {
         describe('topic subscription', function() {
             describe('manuh.subscribe()', function() {
                 
-                it('should create 10000 subscriptions SYNC and ASYNC', function () {
+                it('should create 1000 subscriptions SYNC and ASYNC', function () {
                     var start = new Date().getTime();
-                    for (var i = 0; i < 10000; i++) {
+                    for (var i = 0; i < 1000; i++) {
                         manuh.asyncSubscribe('charol/manuh/rhelena', "SUBS-" + Math.random(), function (msg) { });
                     }
                     var diffAsync = new Date().getTime() - start;
 
                     var startSync = new Date().getTime();
-                    for (var k=0; k< 10000; k++) {
+                    for (var k=0; k< 1000; k++) {
                         manuh.subscribe('charol/manuh/rhelena', "SUBS-"+Math.random(), function (msg) { });
                     }
                     var diffSync = new Date().getTime()-start;
@@ -179,7 +179,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 });            
 
                 it ('should create the topics based on the path to subscribe async (charol/manuh/rhelena)', function(done) {
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
+                    manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){}, function() {
                         assert(manuh.manuhData.topicsTree.charol);
                         assert(manuh.manuhData.topicsTree.charol.manuh);
                         assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
@@ -198,11 +198,11 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     
                 });
                 it('should create the topics based on the path to subscription async (charol/manuh/rhelena)', function(done) {
-                    manuh.subscribe('charol', this, function(msg){}, function() {
+                    manuh.subscribe('charol', this + Math.random(), function(msg){}, function() {
 
-                        manuh.subscribe('charol/manuh', this, function(msg){}, function() {
+                        manuh.subscribe('charol/manuh', this + Math.random(), function(msg){}, function() {
 
-                            manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
+                            manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){}, function() {
 
                                 assert(manuh.manuhData.topicsTree.charol);
                                 assert(manuh.manuhData.topicsTree.charol.manuh);
@@ -218,7 +218,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
             
                                 assert(!manuh.manuhData.topicsTree.romeu);
     
-                                manuh.subscribe('romeu', this, function(msg){}, function() {
+                                manuh.subscribe('romeu', this + Math.random(), function(msg){}, function() {
     
                                     assert(manuh.manuhData.topicsTree.romeu);
                 
@@ -237,7 +237,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                 });
 
                 it('should create 3 topics based on 1 subscription async (charol/manuh/rhelena)', function(done) {
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
+                    manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){}, function() {
 
                         assert(manuh.manuhData.topicsTree.charol);
                         assert(manuh.manuhData.topicsTree.charol.manuh);
@@ -261,9 +261,28 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     });
 
                 });
+
+                it('should make several subscriptions with the same target, but dont duplicating the subscription', function () {
+                    var received = null;
+                    manuh.subscribe('charol', "a", function (msg) { });
+                    manuh.subscribe('charol/manuh/rhelena', "a", function (msg) {});
+                    manuh.subscribe('charol/manuh/rhelena', "a", function (msg) { });
+                    manuh.subscribe('charol/manuh', "a", function (msg) { });
+                    manuh.subscribe('charol/manuh/rhelena', "a", function (msg) { });
+                    manuh.subscribe('charol/manuh', "a", function (msg) { });
+                    manuh.subscribe('charol/manuh', "a", function (msg) { });
+                    manuh.subscribe('charol', "a", function (msg) { });
+                    manuh.subscribe('charol', "a", function (msg) { });
+                    manuh.subscribe('charol', "b", function (msg) { });
+                    
+                    assert.equal(manuh.manuhData.topicsTree.charol.subscriptions.length, 2);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.subscriptions.length, 1);
+                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
+                });
+
                 it ('should pub-sub in the bus and check the subscription effect (charol/manuh/rhelena)', function(done) {
                     var received = null;
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){
+                    manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){
                         received = msg;
                         assert.equal(received, 'test');
                         done();
@@ -276,10 +295,10 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                 it ('should pub-sub in 2 topics changing the same var and check the subscription effect', function(done) {
                     var received = null;
-                    manuh.subscribe('charol/manuh', this, function(msg){
+                    manuh.subscribe('charol/manuh', this + Math.random(), function(msg){
                         received = msg;
                     });
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){
+                    manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){
                         received = msg;
                     });
                     assert(!received);
@@ -296,7 +315,7 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
                 it ('should pub-sub in 2 topics with sub in 1 changing the same var and varying the pub-delay', function(done) {
                     var received = null;
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){
+                    manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){
                         received = msg;
                     });
                     assert(!received);

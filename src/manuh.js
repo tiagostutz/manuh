@@ -51,7 +51,9 @@ var _manuhFunctions = {
             retainedMessage: null,
             subscriptions: [],
             addSubscription: function (target, onMessageReceived) {
-                this.subscriptions.push({ target: target, onMessageReceived: onMessageReceived});
+                if (this.subscriptions.filter(function(s) { return  s.target == target;}).length == 0) { //avoid subscription duplicated
+                    this.subscriptions.push({ target: target, onMessageReceived: onMessageReceived});
+                }
             }
         };
 
