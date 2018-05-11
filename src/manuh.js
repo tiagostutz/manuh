@@ -224,9 +224,12 @@ module.exports = {
             var message = _manuhData.retainedStorage.getItem(key);
             if (message) {
                 var data = message;
-                if (typeof(message) == 'object') {
+                try { 
                     data = JSON.parse(message);
+                } catch(e){
+                    data = message;
                 }
+
                 _manuhFunctions._multicastMessage(topicToSubscribe, data);
             }
         }
