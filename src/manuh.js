@@ -203,41 +203,49 @@ module.exports = {
 
     },
 
+    __doSubscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
+        if (!onMessageReceived) {
+            throw { msg: 'Error subscribing to `' + topicPathRegex + '` because no `onMessageReceived` callback function was provided.' };
+        }
+
+        var topicToSubscribe = null;
+
+        topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
+        topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
+
+        //lookup for retained messages in memory
+        if (topicToSubscribe.retainedMessage) {
+            _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
+            //lookup for retained messages on local-storage
+        } else {
+            var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
+            var message = _manuhData.retainedStorage.getItem(key);
+            if (message) {
+                _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
+            }
+        }
+        if (onSubscribed) {
+            onSubscribed();
+        }
+    },
     subscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
-        var doSubscribe = function() {
-            if (!onMessageReceived) {
-                throw { msg: 'Error subscribing to `' + topicPathRegex + '` because no `onMessageReceived` callback function was provided.' };
-            }
-
-            var topicToSubscribe = null;
-
-            topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
-            topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
-
-            //lookup for retained messages in memory
-            if (topicToSubscribe.retainedMessage) {
-                _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
-                //lookup for retained messages on local-storage
-            } else {
-                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
-                var message = _manuhData.retainedStorage.getItem(key);
-                if (message) {
-                    _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
-                }
-            }
-            if (onSubscribed) {
-                onSubscribed();
-            }
-        };
 
         //if `onSubscribed` callback provided, make the subscription async
+        var _self = this;
         if (onSubscribed) {
             setTimeout(function() {
-                doSubscribe();
+                _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
             }, 1);
         }else{
-            doSubscribe();
+            _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
         }
+    },
+
+    asyncSubscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
+        if (!onSubscribed) {
+            onSubscribed = function(){};
+        }
+        this.subscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
     },
 
     unsubscribe: function (topicPathRegex, target) {

@@ -161,24 +161,22 @@ describe('manuh client-side lightweight topic infrastructure', function() {
         describe('topic subscription', function() {
             describe('manuh.subscribe()', function() {
                 
-                it('should create 100000 subscriptions ASYNC', function () {
+                it('should create 10000 subscriptions SYNC and ASYNC', function () {
                     var start = new Date().getTime();
-                    for (var i = 0; i < 100000; i++) {
-                        manuh.subscribe('charol/manuh/rhelena', "SUBS-" + Math.random(), function (msg) { }, function () { });
+                    for (var i = 0; i < 10000; i++) {
+                        manuh.asyncSubscribe('charol/manuh/rhelena', "SUBS-" + Math.random(), function (msg) { });
                     }
-                    var diff = new Date().getTime() - start;
-                    assert.ok(diff < 300);
-                });
-                
-                it('should create 100000 subscriptions SYNC', function () {
-                    var start = new Date().getTime();
-                    for (var i=0; i< 100000; i++) {
+                    var diffAsync = new Date().getTime() - start;
+
+                    var startSync = new Date().getTime();
+                    for (var k=0; k< 10000; k++) {
                         manuh.subscribe('charol/manuh/rhelena', "SUBS-"+Math.random(), function (msg) { });
                     }
-                    var diff = new Date().getTime()-start;
-                    assert.ok(diff > 300);
-                });
+                    var diffSync = new Date().getTime()-start;
 
+                    // 50% mais lento o SYNC
+                    assert.ok(diffSync > diffAsync * 1.5);
+                });            
 
                 it ('should create the topics based on the path to subscribe async (charol/manuh/rhelena)', function(done) {
                     manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
