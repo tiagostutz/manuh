@@ -160,71 +160,108 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
         describe('topic subscription', function() {
             describe('manuh.subscribe()', function() {
-
-                it ('should create the topics based on the path to subscribe (charol/manuh/rhelena)', function() {
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){});
-
-                    assert(manuh.manuhData.topicsTree.charol);
-                    assert(manuh.manuhData.topicsTree.charol.manuh);
-                    assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
-
-                    assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
-
-                    assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
-
-                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
+                
+                it('should create 100000 subscriptions ASYNC', function () {
+                    var start = new Date().getTime();
+                    for (var i = 0; i < 100000; i++) {
+                        manuh.subscribe('charol/manuh/rhelena', "SUBS-" + Math.random(), function (msg) { }, function () { });
+                    }
+                    var diff = new Date().getTime() - start;
+                    assert.ok(diff < 300);
                 });
-                it ('should create the topics based on the path to subscription (charol/manuh/rhelena)', function() {
-                    manuh.subscribe('charol', this, function(msg){});
-                    manuh.subscribe('charol/manuh', this, function(msg){});
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){});
-
-                    assert(manuh.manuhData.topicsTree.charol);
-                    assert(manuh.manuhData.topicsTree.charol.manuh);
-                    assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
-
-                    assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
-
-                    assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
-
-                    assert(!manuh.manuhData.topicsTree.romeu);
-                    manuh.subscribe('romeu', this, function(msg){});
-                    assert(manuh.manuhData.topicsTree.romeu);
-
-                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 2);
-
-                    assert.equal(manuh.manuhData.topicsTree.romeu.subscriptions.length, 1);
-                    assert.equal(typeof(manuh.manuhData.topicsTree.romeu.subscriptions[0].onMessageReceived), 'function');
+                
+                it('should create 100000 subscriptions SYNC', function () {
+                    var start = new Date().getTime();
+                    for (var i=0; i< 100000; i++) {
+                        manuh.subscribe('charol/manuh/rhelena', "SUBS-"+Math.random(), function (msg) { });
+                    }
+                    var diff = new Date().getTime()-start;
+                    assert.ok(diff > 300);
                 });
 
-                it ('should create 3 topics based on 1 subscription (charol/manuh/rhelena)', function() {
-                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){});
 
-                    assert(manuh.manuhData.topicsTree.charol);
-                    assert(manuh.manuhData.topicsTree.charol.manuh);
-                    assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
+                it ('should create the topics based on the path to subscribe async (charol/manuh/rhelena)', function(done) {
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
+                        assert(manuh.manuhData.topicsTree.charol);
+                        assert(manuh.manuhData.topicsTree.charol.manuh);
+                        assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
+    
+                        assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+    
+                        assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
+    
+                        assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
+                        done();
+                    });
+                    
+                });
+                it('should create the topics based on the path to subscription async (charol/manuh/rhelena)', function(done) {
+                    manuh.subscribe('charol', this, function(msg){}, function() {
 
-                    assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+                        manuh.subscribe('charol/manuh', this, function(msg){}, function() {
 
-                    assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
+                            manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
 
+                                assert(manuh.manuhData.topicsTree.charol);
+                                assert(manuh.manuhData.topicsTree.charol.manuh);
+                                assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
+            
+                                assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                                assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                                assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+            
+                                assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                                assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                                assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
+            
+                                assert(!manuh.manuhData.topicsTree.romeu);
+    
+                                manuh.subscribe('romeu', this, function(msg){}, function() {
+    
+                                    assert(manuh.manuhData.topicsTree.romeu);
+                
+                                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 2);
+                
+                                    assert.equal(manuh.manuhData.topicsTree.romeu.subscriptions.length, 1);
+                                    assert.equal(typeof(manuh.manuhData.topicsTree.romeu.subscriptions[0].onMessageReceived), 'function');
+                                    done();
+    
+                                });
 
-                    assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
+                            });        
 
-                    assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
-                    assert.equal(typeof(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions[0].onMessageReceived), 'function');
+                        });
+                    });
+                });
+
+                it('should create 3 topics based on 1 subscription async (charol/manuh/rhelena)', function(done) {
+                    manuh.subscribe('charol/manuh/rhelena', this, function(msg){}, function() {
+
+                        assert(manuh.manuhData.topicsTree.charol);
+                        assert(manuh.manuhData.topicsTree.charol.manuh);
+                        assert(manuh.manuhData.topicsTree.charol.manuh.rhelena);
+    
+                        assert.equal(manuh.manuhData.topicsTree.charol.name, 'charol');
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.name, 'manuh');
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.name, 'rhelena');
+    
+                        assert.equal(manuh.manuhData.topicsTree.charol.parent, manuh.manuhData.topicsTree);
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.parent, manuh.manuhData.topicsTree.charol);
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.parent, manuh.manuhData.topicsTree.charol.manuh);
+    
+    
+                        assert.equal(Object.keys(manuh.manuhData.topicsTree).length, 1);
+    
+                        assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
+                        assert.equal(typeof(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions[0].onMessageReceived), 'function');
+
+                        done();
+                    });
+
                 });
                 it ('should pub-sub in the bus and check the subscription effect (charol/manuh/rhelena)', function(done) {
                     var received = null;

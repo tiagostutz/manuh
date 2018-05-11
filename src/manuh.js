@@ -36,7 +36,7 @@ var _manuhData = {
 
     topicsTree: {},
 
-    __publishCallbackInvokeIntervalDelay: 0, //mainly used for development porpuses
+    __publishCallbackInvokeIntervalDelay: 1, //mainly used for development porpuses
 };
 
 var _manuhFunctions = {
@@ -109,8 +109,9 @@ var _manuhFunctions = {
     _multicastMessage: function (topicToPublish, message) {
         var invokeCallbackIsolated = function (subsc) {
             var _subsc = subsc;
+            debug('>>>>>> SCHEDULING CALLBACK ');
             setTimeout(function () {
-                debug('>>>>>> CALLING ONMESSAGE ');
+                debug('>>>>>> INVOKING CALLBACK ');
                 _subsc.onMessageReceived(message);
             }, _manuhData.__publishCallbackInvokeIntervalDelay);
         };
@@ -163,31 +164,6 @@ module.exports = {
         }
 
         // publish in the main topic and in the derivated topics
-        // var topicTemplate = _manuhFunctions._createTopic('temp', null); //create a topic to get the attributes that are not nother topics
-        // var topicAttributeNames = Object.keys(topicTemplate);
-
-        // var siblingTopics = Object.keys(mainTopic.parent)
-        //                             .map(function(attr) { 
-        //                                 return (topicAttributeNames.indexOf(attr) == -1) ? attr : null;
-        //                             })
-        //                             .reduce(function(a,b) { 
-        //                                 if(b!=null) { 
-        //                                     a.push(b); 
-        //                                 } 
-        //                                 return a;
-        //                             }, []);
-
-        // if (siblingTopics.indexOf('#') != -1) { //has wildcard
-        //     siblingTopics.map(function (topicName) {
-        //         if (topicName == '#') {
-        //             topicsToPublish.push(mainTopic.parent[topicName]);
-        //         }
-        //     });
-        // }
-
-
-
-        // publish in the main topic and in the derivated topics
         var findAllWildcardTopics = function (topic) {
             if (!topic) {
                 return [];
@@ -222,35 +198,46 @@ module.exports = {
 
 
         topicsToPublish.map(function(topic) {
-            log('[[[topic]]]]:::', topic.name, topic.subscriptions);
             _manuhFunctions._multicastMessage(topic, message);
         });
-        log('===============================');
 
     },
 
-    subscribe: function (topicPathRegex, target, onMessageReceived) {
-        if (!onMessageReceived) {
-            throw {msg: 'Error subscribing to `' + topicPathRegex + '` because no `onMessageReceived` callback function was provided.'};
-        }
-
-        var topicToSubscribe = null;
-
-        topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
-        topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
-
-        //lookup for retained messages in memory
-        if (topicToSubscribe.retainedMessage) {
-            _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
-            //lookup for retained messages on local-storage
-        } else {
-            var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
-            var message = _manuhData.retainedStorage.getItem(key);
-            if (message) {
-                _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
+    subscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
+        var doSubscribe = function() {
+            if (!onMessageReceived) {
+                throw { msg: 'Error subscribing to `' + topicPathRegex + '` because no `onMessageReceived` callback function was provided.' };
             }
-        }
 
+            var topicToSubscribe = null;
+
+            topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
+            topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
+
+            //lookup for retained messages in memory
+            if (topicToSubscribe.retainedMessage) {
+                _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
+                //lookup for retained messages on local-storage
+            } else {
+                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
+                var message = _manuhData.retainedStorage.getItem(key);
+                if (message) {
+                    _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
+                }
+            }
+            if (onSubscribed) {
+                onSubscribed();
+            }
+        };
+
+        //if `onSubscribed` callback provided, make the subscription async
+        if (onSubscribed) {
+            setTimeout(function() {
+                doSubscribe();
+            }, 1);
+        }else{
+            doSubscribe();
+        }
     },
 
     unsubscribe: function (topicPathRegex, target) {
