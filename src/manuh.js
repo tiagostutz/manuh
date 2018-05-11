@@ -223,7 +223,11 @@ module.exports = {
             var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
             var message = _manuhData.retainedStorage.getItem(key);
             if (message) {
-                _manuhFunctions._multicastMessage(topicToSubscribe, JSON.parse(data));
+                var data = message;
+                if (typeof(message) == 'object') {
+                    data = JSON.parse(message);
+                }
+                _manuhFunctions._multicastMessage(topicToSubscribe, data);
             }
         }
         if (onSubscribed) {
@@ -237,7 +241,7 @@ module.exports = {
         if (onSubscribed) {
             setTimeout(function() {
                 _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
-            }, 1);
+            }, 0);
         }else{
             _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
         }

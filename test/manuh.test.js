@@ -161,21 +161,22 @@ describe('manuh client-side lightweight topic infrastructure', function() {
         describe('topic subscription', function() {
             describe('manuh.subscribe()', function() {
                 
-                it('should create 1000 subscriptions SYNC and ASYNC', function () {
+                it('should create 1000 subscriptions SYNC and ASYNC', function (done) {
                     var start = new Date().getTime();
                     for (var i = 0; i < 1000; i++) {
                         manuh.asyncSubscribe('charol/manuh/rhelena', "SUBS-" + Math.random(), function (msg) { });
                     }
                     var diffAsync = new Date().getTime() - start;
-
+                    
                     var startSync = new Date().getTime();
                     for (var k=0; k< 1000; k++) {
                         manuh.subscribe('charol/manuh/rhelena', "SUBS-"+Math.random(), function (msg) { });
                     }
                     var diffSync = new Date().getTime()-start;
-
+                    
                     // 50% mais lento o SYNC
                     assert.ok(diffSync > diffAsync * 1.5);
+                    done();
                 });            
 
                 it ('should create the topics based on the path to subscribe async (charol/manuh/rhelena)', function(done) {
