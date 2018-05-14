@@ -361,6 +361,26 @@ describe('manuh client-side lightweight topic infrastructure', function() {
 
             });
 
+            describe('manuh.subscribeRetained()', function () {
+                it('should return a retained message as a result of the subscribe', function () {
+                    manuh.publish('charol/manuh/rhelena', '3 little girls!', { retained: true });
+                    var subscRetained1 = manuh.__doSubscribe('charol/manuh/rhelena', 'ID', function(){});
+                    assert.equal(subscRetained1, "3 little girls!");
+
+                    var subscRetained2 = manuh.subscribe('charol/manuh/rhelena', 'ID', function () { });
+                    assert.equal(subscRetained2, "3 little girls!");
+                });
+                it('should bring in the callback the info parameter with `retained` attribute', function (done) {
+                    manuh.publish('charol/manuh/rhelena', '3 little girls!', { retained: true });
+                    var subscRetained = manuh.subscribe('charol/manuh/rhelena', 'ID', function (msg, info) {
+                        assert.equal(msg, "3 little girls!");
+                        assert.equal(info.retained, true);
+                        done();
+                    });
+
+                });
+            });            
+
             describe('manuh.wildCardSubscribe()', function () {
                 it('should pub/sub in 2 a non-existing first-level topic with `#` wildcard', function (done) {
                     var pubCount = 0;

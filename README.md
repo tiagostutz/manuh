@@ -25,3 +25,7 @@ You can now subscribe with `#` wildcard, just like a good ol' MQTT subscription
 The `+` isn't supported yet, ¯\_(ツ)_/¯
 
 Also, if you provide a callback `onsubscribed` in the last parameter, the subscription will be made asynchronously
+
+## `1.3.x` subscription now returns the retained value and the callback receives an extra `info` parameter
+When you invoke the `subscription` method syncronously, it will return the retained value - if there is one.
+The callback function of the `subscription` method now returns the message received and an `info`  parameter that can have some additional info of the message. The first one is an attribute indicating whether the message was a retained message or not.

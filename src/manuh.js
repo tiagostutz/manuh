@@ -108,13 +108,17 @@ var _manuhFunctions = {
         return arrTopics[arrTopics.length - 1]; //return only the last topic found, that will be the last one on the path
     },
 
-    _multicastMessage: function (topicToPublish, message) {
+    _multicastMessage: function (topicToPublish, message, retained) {
         var invokeCallbackIsolated = function (subsc) {
             var _subsc = subsc;
             debug('>>>>>> SCHEDULING CALLBACK ');
             setTimeout(function () {
                 debug('>>>>>> INVOKING CALLBACK ');
-                _subsc.onMessageReceived(message);
+                var info = {};
+                if (typeof(retained) != 'undefined') {
+                    info.retained = retained;
+                }
+                _subsc.onMessageReceived(message, info);
             }, _manuhData.__publishCallbackInvokeIntervalDelay);
         };
 
@@ -200,7 +204,7 @@ module.exports = {
 
 
         topicsToPublish.map(function(topic) {
-            _manuhFunctions._multicastMessage(topic, message);
+            _manuhFunctions._multicastMessage(topic, message, false);
         });
 
     },
@@ -210,14 +214,16 @@ module.exports = {
             throw { msg: 'Error subscribing to `' + topicPathRegex + '` because no `onMessageReceived` callback function was provided.' };
         }
 
+        var retainedMessage = null;
         var topicToSubscribe = null;
 
         topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
         topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
-
+        
         //lookup for retained messages in memory
         if (topicToSubscribe.retainedMessage) {
-            _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage);
+            retainedMessage = topicToSubscribe.retainedMessage;
+            _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage, true);
             //lookup for retained messages on local-storage
         } else {
             var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
@@ -229,13 +235,14 @@ module.exports = {
                 } catch(e){
                     data = message;
                 }
-
-                _manuhFunctions._multicastMessage(topicToSubscribe, data);
+                retainedMessage = data;
+                _manuhFunctions._multicastMessage(topicToSubscribe, data, true);
             }
         }
         if (onSubscribed) {
             onSubscribed();
         }
+        return retainedMessage;
     },
     subscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
 
@@ -246,7 +253,7 @@ module.exports = {
                 _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
             }, 0);
         }else{
-            _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
+           return _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
         }
     },
 
