@@ -111,13 +111,14 @@ var _manuhFunctions = {
     _multicastMessage: function (topicToPublish, message, retained) {
         var invokeCallbackIsolated = function (subsc) {
             var _subsc = subsc;
-            debug('>>>>>> SCHEDULING CALLBACK ');
+            debug("invokeCallbackIsolated async...");
             setTimeout(function () {
-                debug('>>>>>> INVOKING CALLBACK ');
+                debug('invokeCallbackIsolated timeout triggered!');
                 var info = {};
                 if (typeof(retained) != 'undefined') {
                     info.retained = retained;
                 }
+                debug('Calling subscription `onMessageReceived`. Message: ', message, " Info:", info);
                 _subsc.onMessageReceived(message, info);
             }, _manuhData.__publishCallbackInvokeIntervalDelay);
         };
@@ -125,7 +126,7 @@ var _manuhFunctions = {
         for (var k = 0; k < topicToPublish.subscriptions.length; k++) {
             //invoke the callbacks asynchronously and with a closed scope
             var subscription = topicToPublish.subscriptions[k];
-            debug('>>>>>> INVOKE ' + k);
+            debug("Inoking for subscription " + k + " - target: " + subscription.target);
             new invokeCallbackIsolated(subscription);
         }
     }
@@ -134,16 +135,18 @@ var _manuhFunctions = {
 module.exports = {
 
     publish: function (topicPath, message, options) {
-        var _self = this;
+        debug("calling `publish` with params: ", topicPath, message, options);
         var topicsToPublish = [];
         var mainTopic = null;
 
         if (!_manuhFunctions._hasSpecialWildcard(topicPath)) {
+            debug("NO special wildcard detected.")
             mainTopic = _manuhFunctions._resolveTopic(topicPath);
             if (mainTopic.length > 1) {
                 throw {msg: 'Error to publish message on topic because there were found more than 1 topic for the provied topicPath. You can publish only to one topic. Check if there are duplicated topic names.'};
             }
             topicsToPublish.push(mainTopic);
+            debug("topicsToPublish afeter resolving mainTopic: ", topicsToPublish);
 
         } else { //if the path has a wildcard that needs to be evaluated
             throw {msg: 'Error to publish message on topic because the topic name (path) provided has invalid characters. Note: you cannot publish using wildcards like you can use on subscriptions.'};
@@ -158,9 +161,11 @@ module.exports = {
 
         if (options && options.retained) {
             if (!options.retainment_provider || options.retainment_provider == 'memory') {
+                debug("`memory` retaintion provider being used");
                 mainTopic.retainedMessage = message;
 
             } else if (options.retainment_provider == 'localStorage') {
+                debug("`localStorage` retaintion provider being used");
                 var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(mainTopic);
                 debug('publish retained ' + key);
                 _manuhData.retainedStorage.setItem(key, JSON.stringify(message));
@@ -171,6 +176,7 @@ module.exports = {
 
         // publish in the main topic and in the derivated topics
         var findAllWildcardTopics = function (topic) {
+            debug("finding the mainand the derivated topics based on the wildcard");
             if (!topic) {
                 return [];
             }
@@ -202,8 +208,9 @@ module.exports = {
         var wildCardTopicsFound = findAllWildcardTopics(mainTopic.parent);
         topicsToPublish = topicsToPublish.concat(wildCardTopicsFound);
 
-
+        debug("topics to publish found: ", topicsToPublish);
         topicsToPublish.map(function(topic) {
+            debug("publishing to topic `" + topic + "`");
             _manuhFunctions._multicastMessage(topic, message, false);
         });
 
