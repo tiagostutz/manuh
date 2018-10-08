@@ -8,7 +8,7 @@ debug('simpleStorage', simpleStorage);
 
 var _manuhData = {
 
-    retainedStorage: typeof(window) == 'undefined' || (typeof(navigator) != 'undefined' && navigator.product == 'ReactNative') ? simpleStorage : window.localStorage,
+    retainedStorage: typeof(window) != 'undefined' && window && window.localStorage ? window.localStorage : simpleStorage,
     /*
     ·         “sport/tennis/player1”
     ·         “sport/tennis/player1/ranking”
