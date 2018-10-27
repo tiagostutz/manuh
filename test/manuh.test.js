@@ -281,6 +281,42 @@ describe('manuh client-side lightweight topic infrastructure', function() {
                     assert.equal(manuh.manuhData.topicsTree.charol.manuh.rhelena.subscriptions.length, 1);
                 });
 
+                it('should make several subscriptions with the same target, overriding the subscription', function (done) {
+                    var received = 0;
+                    manuh.subscribe('charol', "a", function (value) { 
+                        received = value + 2;
+                    });
+                    manuh.publish('charol', 3);
+                    assert.equal(manuh.manuhData.topicsTree.charol.subscriptions.length, 1);
+                    setTimeout(function() {
+                        assert.equal(received, 5); // = 3 + 2
+                        
+                        manuh.subscribe('charol', "a", function (value) { 
+                            received = value * 2;
+                        });
+                        manuh.publish('charol', 3);
+                        assert.equal(manuh.manuhData.topicsTree.charol.subscriptions.length, 1);
+                        setTimeout(function() {
+                            assert.equal(received, 6); // = 3 * 2
+                            
+                            manuh.subscribe('charol', "a", function (value) { 
+                                received = value / 2;
+                            });
+                            manuh.publish('charol', 3);
+                            assert.equal(manuh.manuhData.topicsTree.charol.subscriptions.length, 1);
+                            setTimeout(function() {
+                                assert.equal(received, 1.5); // = 3 / 2
+                                assert.equal(manuh.manuhData.topicsTree.charol.subscriptions.length, 1);
+                                done();
+        
+                            }, 20);
+    
+                        }, 20);
+
+                    }, 20);
+
+                });
+
                 it ('should pub-sub in the bus and check the subscription effect (charol/manuh/rhelena)', function(done) {
                     var received = null;
                     manuh.subscribe('charol/manuh/rhelena', this + Math.random(), function(msg){

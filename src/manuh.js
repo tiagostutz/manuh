@@ -51,9 +51,8 @@ var _manuhFunctions = {
             retainedMessage: null,
             subscriptions: [],
             addSubscription: function (target, onMessageReceived) {
-                if (this.subscriptions.filter(function(s) { return  s.target == target;}).length == 0) { //avoid subscription duplicated
-                    this.subscriptions.push({ target: target, onMessageReceived: onMessageReceived});
-                }
+                this.subscriptions = this.subscriptions.filter(function(s) { return  s.target !== target;} ); // "removes" the previous subscription to override it
+                this.subscriptions.push({ target: target, onMessageReceived: onMessageReceived});
             }
         };
 
@@ -111,7 +110,7 @@ var _manuhFunctions = {
     _multicastMessage: function (topicToPublish, message, retained) {
         var invokeCallbackIsolated = function (subsc) {
             var _subsc = subsc;
-            debug("invokeCallbackIsolated async...");
+            debug("invokeCallbackIsolated async in ",_manuhData.__publishCallbackInvokeIntervalDelay,"...");
             setTimeout(function () {
                 debug('invokeCallbackIsolated timeout triggered!');
                 var info = {};
