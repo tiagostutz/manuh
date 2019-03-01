@@ -271,15 +271,11 @@ module.exports = {
     },
 
     unsubscribe: function (topicPathRegex, target) {
-        var topicToSubscribe = null;
-        if (!_manuhFunctions._hasSpecialWildcard(topicPathRegex)) {
-            topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
-            topicToSubscribe.subscriptions = topicToSubscribe.subscriptions.filter(function(obj) {
-                return obj.target !== target;
-            });
-        } else { //if the path has a wildcard that needs to be evaluated
-            throw 'Wildcard paths not supported for subscriptions yet';    
-        }
+        var topicToSubscribe = null;    
+        topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
+        topicToSubscribe.subscriptions = topicToSubscribe.subscriptions.filter(function(obj) {
+            return obj.target !== target;
+        });
     }
 
 };
