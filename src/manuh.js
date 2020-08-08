@@ -127,7 +127,12 @@ var _manuhFunctions = {
         return arrTopics[arrTopics.length - 1]; //return only the last topic found, that will be the last one on the path
     },
 
-    _multicastMessage: function (topicToPublish, message, retained) {
+    _multicastMessage: function (
+        topicToPublish,
+        message,
+        retained,
+        originalTopic
+    ) {
         var invokeCallbackIsolated = function (subsc) {
             var _subsc = subsc;
             debug(
@@ -137,7 +142,7 @@ var _manuhFunctions = {
             );
             setTimeout(function () {
                 debug("invokeCallbackIsolated timeout triggered!");
-                var info = { topic: topicToPublish };
+                var info = { topic: originalTopic };
                 if (typeof retained != "undefined") {
                     info.retained = retained;
                 }
@@ -264,7 +269,7 @@ module.exports = {
         debug("topics to publish found: ", topicsToPublish);
         topicsToPublish.map(function (topic) {
             debug("publishing to topic `" + topic + "`");
-            _manuhFunctions._multicastMessage(topic, message, false);
+            _manuhFunctions._multicastMessage(topic, message, false, topicPath);
         });
     },
 
