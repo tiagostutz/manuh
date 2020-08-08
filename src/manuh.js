@@ -1,14 +1,16 @@
 // Following MQTT wildcard spec
 //http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718107
 
-var debug = require('debug')('debug');
-var log = require('debug')('log');
-var simpleStorage = require('./simpleStorage');
-debug('simpleStorage', simpleStorage);
+var debug = require("debug")("debug");
+var log = require("debug")("log");
+var simpleStorage = require("./simpleStorage");
+debug("simpleStorage", simpleStorage);
 
 var _manuhData = {
-
-    retainedStorage: typeof(window) != 'undefined' && window && window.localStorage ? window.localStorage : simpleStorage,
+    retainedStorage:
+        typeof window != "undefined" && window && window.localStorage
+            ? window.localStorage
+            : simpleStorage,
     /*
     ·         “sport/tennis/player1”
     ·         “sport/tennis/player1/ranking”
@@ -41,7 +43,10 @@ var _manuhData = {
 
 var _manuhFunctions = {
     _hasSpecialWildcard: function _hasSpecialWildcard(str) {
-        return str.indexOf(_manuhData.multiLevelWildCard) != -1 || str.indexOf(_manuhData.singleLevelWildCard) != -1;
+        return (
+            str.indexOf(_manuhData.multiLevelWildCard) != -1 ||
+            str.indexOf(_manuhData.singleLevelWildCard) != -1
+        );
     },
 
     _createTopic: function _createTopic(_name, _parent) {
@@ -51,9 +56,14 @@ var _manuhFunctions = {
             retainedMessage: null,
             subscriptions: [],
             addSubscription: function (target, onMessageReceived) {
-                this.subscriptions = this.subscriptions.filter(function(s) { return  s.target !== target;} ); // "removes" the previous subscription to override it
-                this.subscriptions.push({ target: target, onMessageReceived: onMessageReceived});
-            }
+                this.subscriptions = this.subscriptions.filter(function (s) {
+                    return s.target !== target;
+                }); // "removes" the previous subscription to override it
+                this.subscriptions.push({
+                    target: target,
+                    onMessageReceived: onMessageReceived,
+                });
+            },
         };
 
         if (_parent) {
@@ -64,17 +74,21 @@ var _manuhFunctions = {
     },
 
     _getTopicPath: function __getTopicPath(topicNode) {
-        debug('getTopicPath ', topicNode);
+        debug("getTopicPath ", topicNode);
         if (topicNode.parent == null) {
-            return '';
+            return "";
         } else {
             var parentName = __getTopicPath(topicNode.parent);
-            return parentName + (parentName != '' ? '/' : '') + topicNode.name;
+            return parentName + (parentName != "" ? "/" : "") + topicNode.name;
         }
     },
 
     //returns an array with all matched topics
-    _resolveTopicsByPathRegex: function __resolveTopicsByPathRegex(topicPath, topicNode, remove) {
+    _resolveTopicsByPathRegex: function __resolveTopicsByPathRegex(
+        topicPath,
+        topicNode,
+        remove
+    ) {
         var arrTopics = [];
         if (!topicNode) {
             topicNode = _manuhData.topicsTree;
@@ -90,12 +104,18 @@ var _manuhFunctions = {
         }
 
         if (!topicNode.hasOwnProperty(firstLevelName)) {
-            topicNode[firstLevelName] = _manuhFunctions._createTopic(firstLevelName, topicNode);
+            topicNode[firstLevelName] = _manuhFunctions._createTopic(
+                firstLevelName,
+                topicNode
+            );
         }
 
         arrTopics.push(topicNode[firstLevelName]);
         if (arrTopicNames.length > 1) {
-            var topics = __resolveTopicsByPathRegex(arrTopicNames[1], topicNode[firstLevelName]);
+            var topics = __resolveTopicsByPathRegex(
+                arrTopicNames[1],
+                topicNode[firstLevelName]
+            );
             arrTopics = arrTopics.concat(topics);
         }
 
@@ -110,14 +130,23 @@ var _manuhFunctions = {
     _multicastMessage: function (topicToPublish, message, retained) {
         var invokeCallbackIsolated = function (subsc) {
             var _subsc = subsc;
-            debug("invokeCallbackIsolated async in ",_manuhData.__publishCallbackInvokeIntervalDelay,"...");
+            debug(
+                "invokeCallbackIsolated async in ",
+                _manuhData.__publishCallbackInvokeIntervalDelay,
+                "..."
+            );
             setTimeout(function () {
-                debug('invokeCallbackIsolated timeout triggered!');
-                var info = {};
-                if (typeof(retained) != 'undefined') {
+                debug("invokeCallbackIsolated timeout triggered!");
+                var info = { topic: topicToPublish };
+                if (typeof retained != "undefined") {
                     info.retained = retained;
                 }
-                debug('Calling subscription `onMessageReceived`. Message: ', message, " Info:", info);
+                debug(
+                    "Calling subscription `onMessageReceived`. Message: ",
+                    message,
+                    " Info:",
+                    info
+                );
                 _subsc.onMessageReceived(message, info);
             }, _manuhData.__publishCallbackInvokeIntervalDelay);
         };
@@ -125,30 +154,42 @@ var _manuhFunctions = {
         for (var k = 0; k < topicToPublish.subscriptions.length; k++) {
             //invoke the callbacks asynchronously and with a closed scope
             var subscription = topicToPublish.subscriptions[k];
-            debug("Inoking for subscription " + k + " - target: " + subscription.target);
+            debug(
+                "Inoking for subscription " +
+                    k +
+                    " - target: " +
+                    subscription.target
+            );
             new invokeCallbackIsolated(subscription);
         }
-    }
-
+    },
 };
 module.exports = {
-
     publish: function (topicPath, message, options) {
         debug("calling `publish` with params: ", topicPath, message, options);
         var topicsToPublish = [];
         var mainTopic = null;
 
         if (!_manuhFunctions._hasSpecialWildcard(topicPath)) {
-            debug("NO special wildcard detected.")
+            debug("NO special wildcard detected.");
             mainTopic = _manuhFunctions._resolveTopic(topicPath);
             if (mainTopic.length > 1) {
-                throw {msg: 'Error to publish message on topic because there were found more than 1 topic for the provied topicPath. You can publish only to one topic. Check if there are duplicated topic names.'};
+                throw {
+                    msg:
+                        "Error to publish message on topic because there were found more than 1 topic for the provied topicPath. You can publish only to one topic. Check if there are duplicated topic names.",
+                };
             }
             topicsToPublish.push(mainTopic);
-            debug("topicsToPublish afeter resolving mainTopic: ", topicsToPublish);
-
-        } else { //if the path has a wildcard that needs to be evaluated
-            throw {msg: 'Error to publish message on topic because the topic name (path) provided has invalid characters. Note: you cannot publish using wildcards like you can use on subscriptions.'};
+            debug(
+                "topicsToPublish afeter resolving mainTopic: ",
+                topicsToPublish
+            );
+        } else {
+            //if the path has a wildcard that needs to be evaluated
+            throw {
+                msg:
+                    "Error to publish message on topic because the topic name (path) provided has invalid characters. Note: you cannot publish using wildcards like you can use on subscriptions.",
+            };
         }
 
         var invokeCallbackIsolated = function (subsc) {
@@ -159,15 +200,22 @@ module.exports = {
         };
 
         if (options && options.retained) {
-            if (!options.retainment_provider || options.retainment_provider == 'memory') {
+            if (
+                !options.retainment_provider ||
+                options.retainment_provider == "memory"
+            ) {
                 debug("`memory` retaintion provider being used");
                 mainTopic.retainedMessage = message;
-
-            } else if (options.retainment_provider == 'localStorage') {
+            } else if (options.retainment_provider == "localStorage") {
                 debug("`localStorage` retaintion provider being used");
-                var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(mainTopic);
-                debug('publish retained ' + key);
-                _manuhData.retainedStorage.setItem(key, JSON.stringify(message));
+                var key =
+                    "[manuh-retained]" +
+                    _manuhFunctions._getTopicPath(mainTopic);
+                debug("publish retained " + key);
+                _manuhData.retainedStorage.setItem(
+                    key,
+                    JSON.stringify(message)
+                );
             } else {
                 throw 'options.retainment_provider must be one of ["memory", "localStorage"]';
             }
@@ -175,17 +223,21 @@ module.exports = {
 
         // publish in the main topic and in the derivated topics
         var findAllWildcardTopics = function (topic) {
-            debug("finding the mainand the derivated topics based on the wildcard");
+            debug(
+                "finding the mainand the derivated topics based on the wildcard"
+            );
             if (!topic) {
                 return [];
             }
             var wildcardTopics = [];
-            var topicTemplate = _manuhFunctions._createTopic('temp', null); //create a topic to get the attributes that are not nother topics
+            var topicTemplate = _manuhFunctions._createTopic("temp", null); //create a topic to get the attributes that are not nother topics
             var topicAttributeNames = Object.keys(topicTemplate);
 
             var childTopics = Object.keys(topic)
                 .map(function (attr) {
-                    return (topicAttributeNames.indexOf(attr) == -1) ? attr : null;
+                    return topicAttributeNames.indexOf(attr) == -1
+                        ? attr
+                        : null;
                 })
                 .reduce(function (a, b) {
                     if (b != null) {
@@ -195,29 +247,40 @@ module.exports = {
                 }, []);
 
             childTopics.map(function (topicName) {
-                if (topicName == '#') { //has wildcard
+                if (topicName == "#") {
+                    //has wildcard
                     wildcardTopics.push(topic[topicName]);
                 } else {
-                    wildcardTopics = wildcardTopics.concat(findAllWildcardTopics(topic.parent));
+                    wildcardTopics = wildcardTopics.concat(
+                        findAllWildcardTopics(topic.parent)
+                    );
                 }
             });
             return wildcardTopics;
-
         };
         var wildCardTopicsFound = findAllWildcardTopics(mainTopic.parent);
         topicsToPublish = topicsToPublish.concat(wildCardTopicsFound);
 
         debug("topics to publish found: ", topicsToPublish);
-        topicsToPublish.map(function(topic) {
+        topicsToPublish.map(function (topic) {
             debug("publishing to topic `" + topic + "`");
             _manuhFunctions._multicastMessage(topic, message, false);
         });
-
     },
 
-    __doSubscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
+    __doSubscribe: function (
+        topicPathRegex,
+        target,
+        onMessageReceived,
+        onSubscribed
+    ) {
         if (!onMessageReceived) {
-            throw { msg: 'Error subscribing to `' + topicPathRegex + '` because no `onMessageReceived` callback function was provided.' };
+            throw {
+                msg:
+                    "Error subscribing to `" +
+                    topicPathRegex +
+                    "` because no `onMessageReceived` callback function was provided.",
+            };
         }
 
         var retainedMessage = null;
@@ -225,20 +288,26 @@ module.exports = {
 
         topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
         topicToSubscribe.addSubscription(target, onMessageReceived); //if there aren't wildcards on the topicPath, them it will be a subscription for only one topic
-        
+
         //lookup for retained messages in memory
         if (topicToSubscribe.retainedMessage) {
             retainedMessage = topicToSubscribe.retainedMessage;
-            _manuhFunctions._multicastMessage(topicToSubscribe, topicToSubscribe.retainedMessage, true);
+            _manuhFunctions._multicastMessage(
+                topicToSubscribe,
+                topicToSubscribe.retainedMessage,
+                true
+            );
             //lookup for retained messages on local-storage
         } else {
-            var key = '[manuh-retained]' + _manuhFunctions._getTopicPath(topicToSubscribe);
+            var key =
+                "[manuh-retained]" +
+                _manuhFunctions._getTopicPath(topicToSubscribe);
             var message = _manuhData.retainedStorage.getItem(key);
             if (message) {
                 var data = message;
-                try { 
+                try {
                     data = JSON.parse(message);
-                } catch(e){
+                } catch (e) {
                     data = message;
                 }
                 retainedMessage = data;
@@ -250,34 +319,54 @@ module.exports = {
         }
         return retainedMessage;
     },
-    subscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
-
+    subscribe: function (
+        topicPathRegex,
+        target,
+        onMessageReceived,
+        onSubscribed
+    ) {
         //if `onSubscribed` callback provided, make the subscription async
         var _self = this;
         if (onSubscribed) {
-            setTimeout(function() {
-                _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
+            setTimeout(function () {
+                _self.__doSubscribe(
+                    topicPathRegex,
+                    target,
+                    onMessageReceived,
+                    onSubscribed
+                );
             }, 0);
-        }else{
-           return _self.__doSubscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
+        } else {
+            return _self.__doSubscribe(
+                topicPathRegex,
+                target,
+                onMessageReceived,
+                onSubscribed
+            );
         }
     },
 
-    asyncSubscribe: function (topicPathRegex, target, onMessageReceived, onSubscribed) {
+    asyncSubscribe: function (
+        topicPathRegex,
+        target,
+        onMessageReceived,
+        onSubscribed
+    ) {
         if (!onSubscribed) {
-            onSubscribed = function(){};
+            onSubscribed = function () {};
         }
         this.subscribe(topicPathRegex, target, onMessageReceived, onSubscribed);
     },
 
     unsubscribe: function (topicPathRegex, target) {
-        var topicToSubscribe = null;    
+        var topicToSubscribe = null;
         topicToSubscribe = _manuhFunctions._resolveTopic(topicPathRegex);
-        topicToSubscribe.subscriptions = topicToSubscribe.subscriptions.filter(function(obj) {
-            return obj.target !== target;
-        });
-    }
-
+        topicToSubscribe.subscriptions = topicToSubscribe.subscriptions.filter(
+            function (obj) {
+                return obj.target !== target;
+            }
+        );
+    },
 };
 module.exports.manuhData = _manuhData;
 module.exports.manuhFunctions = _manuhFunctions;
