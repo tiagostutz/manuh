@@ -1,5 +1,11 @@
 # Manuh
 
+## DEPRECATION NOTICE
+
+This was deprecated in favor of the standard https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel
+
+------
+
 A lightweight client-side topic infrastructure inspired by MQTT pub-sub interface to empower frontend event-based interactions. With `manuh` you can build one-way data flow UI without `switch-cases`, `actions`, `stores`, `reducers`, etc. In fact, `manuh` is an alternative to EventEmitter, but with the MQTT protocol steroids.
 
 ## One-way data flow
